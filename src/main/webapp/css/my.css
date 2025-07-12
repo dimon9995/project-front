@@ -1,0 +1,125 @@
+.pagination-button {
+    margin: 0 3px;
+    padding: 5px 10px;
+    border: 1px solid #ccc;
+    background-color: white;
+    cursor: pointer;
+    font-weight: normal;
+    color: black;
+}
+
+.pagination-button.active {
+    background-color: blue;
+    color: white;
+    font-weight: bold;
+    cursor: default;
+    border-color: #007bff;
+}
+#create-account-section {
+    max-width: 500px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+#create-account-section h3 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+#createAccountForm div {
+    margin-bottom: 15px;
+}
+
+#createAccountForm label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: #555;
+}
+
+#createAccountForm input[type="text"],
+#createAccountForm input[type="number"],
+#createAccountForm input[type="date"],
+#createAccountForm select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1.5px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+#createAccountForm input[type="text"]:focus,
+#createAccountForm input[type="number"]:focus,
+#createAccountForm input[type="date"]:focus,
+#createAccountForm select:focus {
+    border-color: #007BFF;
+    outline: none;
+    box-shadow: 0 0 5px rgba(0,123,255,0.5);
+}
+
+#createAccountForm input[type="checkbox"] {
+    transform: scale(1.2);
+    margin-left: 5px;
+    vertical-align: middle;
+    cursor: pointer;
+}
+
+#createAccountForm button[type="submit"] {
+    width: 100%;
+    padding: 10px 0;
+    font-size: 16px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 700;
+    transition: background-color 0.3s;
+}
+
+#createAccountForm button[type="submit"]:hover {
+    background-color: #0056b3;
+}
+
+#createAccountMessage {
+    min-height: 20px;
+    font-size: 14px;
+    text-align: center;
+    color: #d9534f; /* красный для ошибок */
+    margin-top: 10px;
+}
+
+/* Немного отступов для пагинации */
+#pagination-controls {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+#pagination-controls button {
+    margin: 0 3px;
+    padding: 6px 12px;
+    border: 1px solid #007BFF;
+    background-color: white;
+    color: #007BFF;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#pagination-controls button:hover:not(:disabled) {
+    background-color: #007BFF;
+    color: white;
+}
+
+#pagination-controls button.active,
+#pagination-controls button:disabled {
+    background-color: #007BFF;
+    color: white;
+    cursor: default;
+}

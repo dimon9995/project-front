@@ -3,9 +3,303 @@
     <title>RPG</title>
     <script src=https://code.jquery.com/jquery-3.6.0.min.js></script>
     <link href="/css/my.css" rel="stylesheet">
+    <meta charset="UTF-8">
 </head>
 <body>
 <h1>RPG admin panel</h1>
+<label for="accountPerPage">Account Per Page: </label>
+<select id="accountPerPage">
+    <option value="3">3</option>
+    <option value="5">5</option>
+    <option value="10">10</option>
+    <option value="20">20</option>
+</select>
 
+<table id="myTable" border="1">
+    <tr>
+        <th>#</th>
+        <th>Name</th>
+        <th>Title</th>
+        <th>Race</th>
+        <th>Profession</th>
+        <th>Level</th>
+        <th>Birthday</th>
+        <th>Banned</th>
+        <th>Edit</th>
+        <th>Delete</th>
+    </tr>
+
+</table>
+
+<div id="pagination-controls"></div>
+
+<hr>
+<div id="creat-account-section" style="margin-top: 20px;">
+    <h3>Создать новый аккаунт</h3>
+    <form id="createAccountForm">
+        <div>
+            <label for="nameInput">Name (1-12 символов):</label><br>
+            <input type="text" id="nameInput" name="name" minlength="1" maxlength="12" required>
+        </div>
+
+        <div>
+            <label for="titleInput">Title (1-30 символов):</label><br>
+            <input type="text" id="titleInput" name="title" minlength="1" maxlength="30" required>
+        </div>
+
+        <div>
+            <label for="raceSelect">Race:</label><br>
+            <select id="raceSelect" name="race" required>
+                <!-- Опции будут добавлены динамически -->
+            </select>
+        </div>
+
+        <div>
+            <label for="professionSelect">Profession:</label><br>
+            <select id="professionSelect" name="profession" required>
+            </select>
+        </div>
+
+        <div>
+            <label for="levelInput">Level (0-100):</label><br>
+            <input type="number" id="levelInput" name="level" min="0" max="100" required>
+        </div>
+
+        <div>
+            <label for="birthdayInput">Birthday:</label><br>
+            <input type="date" id="birthdayInput" name="birthday" required>
+        </div>
+
+        <div>
+            <label for="bannedCheckbox">Banned:</label>
+            <input type="checkbox" id="bannedCheckbox" name="banned">
+        </div>
+
+        <br>
+        <button type="submit">Создать аккаунт</button>
+    </form>
+
+    <div id="createAccountMessage" style="color: red; margin-top: 10px;"></div>
+</div>
+
+<script>
+
+    let strings = ['Human', 'Dwarf', 'Elf', 'Orc'];
+    const races = strings;
+    const profession = ['Warrior', 'Rogue', 'Mage', 'Hunter'];
+
+    function populateSelectOption(){
+        const raceSelect = document.getElementById('raceSelect');
+        races.forEach(race => {
+            const option = document.createElement('option');
+            option.value = race;
+            option.textContent = race;
+            raceSelect.appendChild(option);
+        });
+        const professionSelect = document.getElementById('professionSelect');
+        profession.forEach(profession =>{
+            const option = document.createElement('option');
+            option.value = profession;
+            option.textContent = profession;
+            professionSelect.appendChild(option);
+        });
+    }
+    window.onload = ()=> {
+        populateSelectOption()
+        loadPage(1);
+    }
+
+    // Общее количество аккаунтов
+    async function fetchAccountsCount() {
+        const response = await fetch('/rest/players/count');
+        if (!response.ok) {
+            throw new Error('Ошибка при получении количества аккаунтов');
+        }
+        const data = await response.json();
+        return typeof data === 'number' ? data : data.count;
+    }
+
+    // Получение аккаунтов для конкретной страницы
+    async function fetchPlayers(pageNumber, pageSize) {
+        const url = await fetch(`/rest/players?pageNumber=${pageNumber}&pageSize=${pageSize}`);
+        if (!url.ok) {
+            throw new Error('Ошибка загрузки игроков');
+        }
+        const data = await url.json();
+        return Array.isArray(data) ? data : data.content;
+    }
+
+    //Получение выбранного количества аккаунтов на страницу
+    function getSelectionAccountPerPage() {
+        return parseInt(document.getElementById('accountPerPage').value, 10);
+    }
+
+    // Отрисовка таблицы игроков
+    function renderPlayersTable(players, page, perPage) {
+        const table = document.getElementById("myTable");
+        while (table.rows.length > 1) {
+            table.deleteRow(1)
+        }
+        players.forEach((p, index) => {
+            const row = table.insertRow();
+            row.insertCell(0).textContent = (page - 1) * perPage + index + 1
+            const nameCell = row.insertCell(1);
+            nameCell.textContent = p.name;
+            const titleCell = row.insertCell(2);
+            titleCell.textContent = p.title;
+            const raceCell = row.insertCell(3);
+            raceCell.textContent = p.race;
+            const professionCell = row.insertCell(4);
+            professionCell.textContent = p.profession;
+            row.insertCell(5).textContent = p.level;
+            const birthday = new Date(p.birthday);
+            row.insertCell(6).textContent = birthday.toLocaleDateString()
+            const bannedCell = row.insertCell(7);
+            bannedCell.textContent = p.banned ? 'true' : 'false';
+
+            const editCell = row.insertCell(8);
+            const editPlayer = document.createElement("button");
+            editPlayer.textContent = '✏️';
+            const deleteCell = row.insertCell(9);
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = '🗑️';
+            editPlayer.onclick= editPlayers(p);
+            deleteBtn.onclick = deletePlayers(p);
+            editPlayer.onclick = async function () {
+                if (editPlayer.textContent === '✏️') {
+                    deleteBtn.style.display = 'none';
+                    editPlayer.textContent = "💾";
+                    editPlayer.title = "Сохранить";
+
+                    nameCell.contentEditable = "true";
+                    titleCell.contentEditable = "true";
+                    raceCell.contentEditable = "true";
+                    professionCell.contentEditable = "true";
+                    bannedCell.contentEditable = "true";
+                    nameCell.focus();
+                } else {
+                    const updatedPlayer = {
+                        ...p,
+                        name: nameCell.textContent.trim(),
+                        title: titleCell.textContent.trim(),
+                        race: raceCell.textContent.trim(),
+                        profession: professionCell.textContent.trim(),
+                        banned: bannedCell.textContent.trim().toLowerCase() === 'true'
+                    };
+                    try {
+                        const response = await fetch(`/rest/players/${p.id}`, {
+                            method: 'PUT',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify(updatedPlayer)
+                        });
+                        if (!response.ok) {
+                            throw new Error('Ошибка сохранения');
+                        }
+                        alert('Изменения сохранены!');
+
+                        editPlayer.textContent = '✏️';
+                        editPlayer.title = "Редактировать";
+                        deleteBtn.style.display = '';
+
+                        nameCell.contentEditable = "false";
+                        titleCell.contentEditable = "false";
+                        raceCell.contentEditable = "false";
+                        professionCell.contentEditable = "false";
+                        bannedCell.contentEditable = "false";
+
+                        await loadPage(page);
+                    } catch (error) {
+                        alert(error.message || "Ошибка при сохранении");
+                    } finally {
+                        editPlayer.disabled = false;
+                    }
+                }
+            };
+            editCell.appendChild(editPlayer);
+            deleteCell.appendChild(deleteBtn);
+        });
+    }
+
+
+    function deletePlayers(p) {
+        return async () => {
+            if (confirm(`Удалить игрока "${p.name}"?`)) {
+                try {
+                    let response = await fetch(`/rest/players/${p.id}`, {method: 'DELETE'});
+                    if (!response.ok) {
+                        throw new Error("Ошибка удаления");
+                    }
+                    alert('Игрок удален!');
+                    await loadPage(1);
+
+                } catch (err) {
+                    alert('Не удалось удалить игрока');
+                }
+            }
+        };
+    }
+        function editPlayers(p) {
+            return async () => {
+                if (confirm(`Редактировать игрока "${p.name}"?`)) {
+                    try {
+                        const response = await fetch(`/rest/players/${p.id}`, {method: 'PUT'});
+
+                        if (!response.ok) {
+                            throw new Error("Ошибка редактирования");
+                        }
+                        alert("Игрок отредактирован");
+                        await loadPage(1);
+                    } catch (err) {
+                        alert("Ошибка редактирования игрока, пробуйте еще раз!")
+                    }
+                }
+            };
+        }
+
+
+        //Отрисовка кнопок пагинации
+        function renderPaginationControls(currentPage, totalPages) {
+            const container = document.getElementById('pagination-controls');
+            container.innerHTML = '';
+            for (let i = 1; i <= totalPages; i++) {
+                const btn = document.createElement('button');
+                btn.textContent = i;
+                btn.classList.add('pagination-button');
+                if (i === currentPage) {
+                    btn.classList.add('active')
+                    btn.disabled = true;
+                } else {
+                    btn.onclick = () => loadPage(i);
+                }
+                container.appendChild(btn);
+
+            }
+        }
+
+        //Основная функция загрузки страницы с игроками
+        async function loadPage(pageNumber = 1) {
+            try {
+                const pageSize = getSelectionAccountPerPage();
+                const [players, totalCount] = await Promise.all([
+                    fetchPlayers(pageNumber - 1, pageSize), // если сервер считает страницы с 0
+                    fetchAccountsCount()
+                ]);
+                const totalPages = Math.ceil(totalCount / pageSize);
+                renderPlayersTable(players, pageNumber, pageSize);
+                renderPaginationControls(pageNumber, totalPages);
+            } catch (error) {
+                console.error('Ошибка загрузки страницы:', error)
+            }
+        }
+
+
+        // Событие при изменении количества аккаунтов на странице
+        document.getElementById('accountPerPage').addEventListener('change', () => loadPage(1));
+
+        // Загрузка первой страницы при старте
+        window.onload = () => loadPage(1);
+
+
+</script>
 </body>
 </html>
